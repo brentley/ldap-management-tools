@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME " >&2
+  exit 1
+fi
+
+# I know, I know... automate the bastion list. For now, this is what I have.
+
+USERNAME=$1
+BASTIONS="bastion01.example.org bastion02.example.org bastion03.example.org"
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+for i in $BASTIONS
+do
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+add: host
+host: $i" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" &>/dev/null && echo "Success! The $USERNAME account is now able to log in to $i." || echo "FAIL! $i was not unlocked."
+done

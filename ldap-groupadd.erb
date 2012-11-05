@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ "$#" -ne 2 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME GROUPNAME" >&2
+  exit 1
+fi
+
+
+USERNAME=$1
+GROUPNAME=$2
+FILENAME="$HOME/Dropbox/ldif/groups/$USERNAME-$GROUPNAME.ldif"
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+echo \
+"dn: cn=$GROUPNAME,ou=groups,dc=example,dc=org
+changetype: modify
+add: uniqueMember
+uniqueMember: uid=$USERNAME,ou=People,dc=example,dc=org" \
+\
+| ldapmodify -vc -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" 

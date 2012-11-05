@@ -1,0 +1,39 @@
+#!/bin/bash
+
+if [ "$#" -ne 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 " >&2
+  exit 1
+fi
+
+confirm () {
+    # call with a prompt string or use a default
+    echo "This will enable access and audit logging on $LDAPHOST."
+    read -r -p "Are you sure? [y/N] " response
+    case $response in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+confirm && echo \
+"dn: cn=config
+changetype: modify
+replace: nsslapd-auditlog-logging-enabled
+nsslapd-auditlog-logging-enabled: on
+-
+replace: nsslapd-accesslog-maxlogsperdir
+nsslapd-accesslog-maxlogsperdir: 50
+-
+replace: nsslapd-accesslog-logminfreediskspace
+nsslapd-accesslog-logminfreediskspace: 500" \
+\
+| ldapmodify -vc -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" 
+

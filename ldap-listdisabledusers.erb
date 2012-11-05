@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$#" -ne 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0" >&2
+  exit 1
+fi
+
+
+BINDUSER='cn=Directory Manager'
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+ldapsearch -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" -b "ou=People,dc=example,dc=org" '(&(modifiersName=cn=directory manager)(gecos=disabled disabled))' uid |grep dn\:

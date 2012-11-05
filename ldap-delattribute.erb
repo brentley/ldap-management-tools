@@ -1,0 +1,45 @@
+#!/bin/bash
+
+usage () {
+  echo "Usage: $0 ATTRIBUTE_NAME" >&2
+  echo "Supported Attributes:"
+  echo "		      bashProfile"
+  echo "		      bashProfile2"
+  echo "		      bashProfile3"
+  echo "		      screenrc"
+  echo "		      vimrc"
+  echo "		      tmuxrc"
+  echo "		      bashLogout"
+  exit 1
+}
+
+ldapmod () {
+
+USERNAME=$USER
+ATTRIBUTE=$1
+BINDUSER="uid=$USERNAME,ou=People,dc=example,dc=org"
+LDAPHOST=ldap.example.org
+echo -n "Enter your LDAP Password: "
+read -s BINDPW
+echo
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+delete: $ATTRIBUTE" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" &>/dev/null && echo "Success! The $ATTRIBUTE was deleted from the $USERNAME account." || echo "FAIL! The $ATTRIBUTE was not deleted from the $USERNAME account."
+}
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+fi
+
+if [ "$1" != "bashProfile" ] && [ "$1" != "bashProfile2" ] && [ "$1" != "bashProfile3" ] && [ "$1" != "screenrc" ] && [ "$1" != "vimrc" ] && [ "$1" != "tmuxrc" ] && [ "$1" != "bashLogout" ]; then
+  echo "=============================="
+  echo "Incorrect attribute specified."
+  echo "=============================="
+  echo
+  usage
+fi
+
+ldapmod $1

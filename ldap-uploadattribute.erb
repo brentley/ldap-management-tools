@@ -1,0 +1,62 @@
+#!/bin/bash
+
+usage () {
+  echo "Usage: $0 ATTRIBUTE_NAME FILE" >&2
+  echo "Supported Attributes:"
+  echo "		      bashProfile"
+  echo "		      bashProfile2"
+  echo "		      bashProfile3"
+  echo "		      screenrc"
+  echo "		      vimrc"
+  echo "		      tmuxrc"
+  echo "		      bashLogout"
+  exit 1
+}
+
+ldapmod () {
+USERNAME=$USER
+ATTRIBUTE=$1
+INPUTFILE="`openssl enc -in $2 -base64 |tr -d "\n"`"
+BINDUSER="uid=$USERNAME,ou=People,dc=example,dc=org"
+LDAPHOST=ldap.example.org
+echo -n "Enter your LDAP Password: "
+read -s BINDPW
+echo
+
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+replace: $ATTRIBUTE
+$ATTRIBUTE:: $INPUTFILE" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" &>/dev/null && echo "Success! The $ATTRIBUTE was added to the $USERNAME account." || echo "FAIL! The $ATTRIBUTE was not added to the $USERNAME account." 
+}
+
+if [ "$#" -ne 2 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+fi
+
+if [ "$1" != "bashProfile" ] && [ "$1" != "bashProfile2" ] && [ "$1" != "bashProfile3" ] && [ "$1" != "screenrc" ] && [ "$1" != "vimrc" ] && [ "$1" != "tmuxrc" ] && [ "$1" != "bashLogout" ]; then
+  echo "=============================="
+  echo "Incorrect attribute specified."
+  echo "=============================="
+  echo
+  usage
+fi
+
+if [ ! -f "$2" ] || [ ! -s "$2" ]; then
+  echo "========================"
+  echo "Could not read your file"
+  echo "========================"
+  echo
+  usage
+fi
+
+if [ $(stat -c %s "$2") -gt 3060 ]; then
+  echo "============================================"
+  echo "3060 bytes is the maximum file size allowed."
+  echo "============================================"
+  exit 2
+fi
+
+ldapmod $1 $2

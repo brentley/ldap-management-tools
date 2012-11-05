@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ "$#" -ne 2 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME SSHPUBKEYFILE" >&2
+  exit 1
+fi
+
+
+USERNAME=$1
+SSHPUBKEY=`cat $2`
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+replace: sshPublicKey
+sshPublicKey: $SSHPUBKEY" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" 
+
+

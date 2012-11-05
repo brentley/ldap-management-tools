@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME" >&2
+  exit 1
+fi
+
+
+USERNAME=$1
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+delete: nsRoleDN 
+-
+replace: loginShell
+loginShell: /bin/bash" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" 
+

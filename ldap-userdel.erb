@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME" >&2
+  exit 1
+fi
+
+confirm () {
+    # call with a prompt string or use a default
+    read -r -p "${1:-This will delete the $USERNAME account. This is almost certainly the wrong thing to do.  Are you sure? [Y/n]} " response
+    case $response in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+USERNAME=$1
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+confirm && ldapdelete -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" "uid=$USERNAME,ou=People,dc=example,dc=org" && ldapdelete -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" "cn=$USERNAME,ou=Groups,dc=example,dc=org"
+
+
+

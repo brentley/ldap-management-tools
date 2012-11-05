@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME" >&2
+  exit 1
+fi
+
+
+USERNAME=$1
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+echo \
+"dn: uid=$USERNAME,ou=People,dc=example,dc=org
+changetype: modify
+add: host
+host: *" \
+\
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" &>/dev/null && echo "Success! The $USERNAME account is now able to log in to all hosts. You probably $USERNAME to change their password next." || echo "FAIL! Hosts were not unlocked." 

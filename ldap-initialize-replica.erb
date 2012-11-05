@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 REPLICAHOST" >&2
+  exit 1
+fi
+
+
+REPLICAHOST=$1
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+echo \
+"dn: cn=replication from $LDAPHOST port 636 to $REPLICAHOST port 636,cn=replica,cn=dc\3dexample\2cdc\3dorg,cn=mapping tree,cn=config
+changetype: modify
+replace: nsds5BeginReplicaRefresh
+nsds5BeginReplicaRefresh: start" \
+| ldapmodify -c -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW" 

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 USERNAME" >&2
+  exit 1
+fi
+
+confirm () {
+    # call with a prompt string or use a default
+    read -r -p "${1:-This will expire the password for $USERNAME Are you sure? [Y/n]} " response
+    case $response in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+
+USERNAME=$1
+BINDUSER="cn=Directory Manager"
+BINDPW=DirManPassWord
+LDAPHOST=ldap.example.org
+
+confirm && echo \
+"dn: uid=$USERNAME,ou=people,dc=example,dc=org
+changetype: modify
+replace: modifiersname
+modifiersname: cn=directory manager
+-
+replace: passwordRetryCount
+passwordRetryCount: 0
+-
+replace: passwordgraceusertime
+passwordgraceusertime: 0
+-
+replace: passwordExpirationTime
+passwordExpirationTime: 19700101000000Z
+-
+replace: passwordExpWarned
+passwordExpWarned: 0" \
+\
+| ldapmodify -vc -x -ZZ -h $LDAPHOST -D "$BINDUSER" -w "$BINDPW"
